@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Augmented Automation Documents</title>
+  <link rel="icon" type="image/x-icon" href="/static/robot.ico">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #ffffff;
+      color: #000000;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #ffffff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    header img { height: 56px; width: auto; border-radius: 4px; }
+
+    .header-titles { flex: 1; }
+    .header-titles h1 {
+      font-family: "Bookman Old Style", "URW Bookman", Georgia, serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #000000;
+    }
+    .header-titles p { font-size: 0.7rem; color: #555; margin-top: 2px; }
+
+    .hdr-btn {
+      background: #f0f0f0;
+      color: #000000;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .hdr-btn:hover { background: #e0e0e0; }
+
+
+    #main { display: flex; flex: 1; overflow: hidden; }
+
+    #chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+    }
+
+    .message {
+      width: 100%;
+      padding: 16px 24px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+      word-break: break-word;
+    }
+
+    .message.user {
+      background: #eef4ff;
+      color: #000000;
+      border-bottom: 1px solid #d8e6f7;
+    }
+
+    .message.assistant {
+      background: #ffffff;
+      color: #000000;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .message.error {
+      background: #fdeaea;
+      color: #a12626;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #e0a0a0;
+      padding: 8px 24px;
+    }
+
+    .message-text { white-space: pre-wrap; }
+
+    .sources {
+      margin-top: 8px;
+      font-size: 0.72rem;
+      color: #888;
+      border-top: 1px solid #d0d0d0;
+      padding-top: 6px;
+    }
+
+    .sources a {
+      display: block;
+      color: #0f3460;
+      margin-top: 4px;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .sources a:hover { color: #4a9eff; }
+
+    .code-block {
+      background: #1a1a1a;
+      border-radius: 8px;
+      margin: 8px 0;
+      overflow: hidden;
+      font-size: 0.82rem;
+      border: 1px solid #333;
+    }
+
+    .code-lang {
+      background: #2a2a2a;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      color: #888;
+      font-family: monospace;
+      border-bottom: 1px solid #333;
+    }
+
+    .code-block pre { padding: 10px 12px; overflow-x: auto; margin: 0; }
+    .code-block code { font-family: 'Courier New', Courier, monospace; color: #c9d1d9; white-space: pre; }
+
+    .thinking {
+      align-self: flex-start;
+      color: #888;
+      font-size: 0.85rem;
+      font-style: italic;
+      padding: 4px 4px;
+    }
+
+    #attachments {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 16px 0;
+      background: #ffffff;
+    }
+
+    #attachments:empty { display: none; }
+
+    .attach-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      padding: 3px 10px;
+      font-size: 0.8rem;
+      color: #000000;
+    }
+
+    .attach-chip button {
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0;
+      line-height: 1;
+    }
+    .attach-chip button:hover { color: #cc0000; }
+
+    #attach-btn {
+      background: #f0f0f0;
+      color: #000000;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 0 14px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      align-self: flex-end;
+      height: 42px;
+      line-height: 1;
+    }
+    #attach-btn:hover { background: #e0e0e0; }
+
+    #input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #ffffff;
+      border-top: 1px solid #ddd;
+    }
+
+    #user-input {
+      flex: 1;
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      resize: none;
+      max-height: 140px;
+    }
+
+    #user-input:focus { outline: none; border-color: #4a9eff; }
+
+    #send-btn {
+      background: #30d158;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    #send-btn:hover:not(:disabled) { background: #25a244; }
+    #send-btn:disabled { background: #1a5c30; cursor: not-allowed; }
+
+    /* About modal */
+    #about-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #about-overlay.open { display: flex; }
+    #about-box {
+      background: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      padding: 28px 32px;
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #about-box h2 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; color: #0f3460; }
+    #about-box p { font-size: 0.9rem; line-height: 1.6; color: #333; }
+    #about-box button {
+      margin-top: 12px;
+      align-self: flex-end;
+      background: #f0f0f0;
+      color: #000000;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 18px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    #about-box button:hover { background: #e0e0e0; }
+  </style>
+</head>
+<body>
+
+<div id="about-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div id="about-box">
+    <h2>About : Augmented Automation Documents </h2>
+    <p><strong>Version:</strong> 0.7</p>
+    <p><strong>Built by:</strong> Campbell Pateson</p>
+    <p><strong>Contact :</strong> campbell1@fastmail.com.au</p>
+    <button onclick="document.getElementById('about-overlay').classList.remove('open')">Close</button>
+  </div>
+</div>
+
+<header>
+  <img src="/static/J7.png" alt="Logo">
+  <div class="header-titles">
+    <h1>Augmented Automation Documents</h1>
+    <p>Local Document Reader <span id="model-name"></span></p>
+  </div>
+  <button class="hdr-btn" onclick="saveChat()">Save</button>
+  <button class="hdr-btn" onclick="clearChat()">Clear</button>
+  <button class="hdr-btn" onclick="listDocuments()">Documents</button>
+  <button class="hdr-btn" onclick="document.getElementById('about-overlay').classList.add('open')">About</button>
+</header>
+
+<div id="main">
+  <div id="chat-area">
+    <div id="messages"></div>
+    <div id="attachments"></div>
+    <div id="input-row">
+      <button id="attach-btn" title="Attach file" onclick="document.getElementById('file-input').click()">+</button>
+      <input type="file" id="file-input" style="display:none" multiple
+             accept=".txt,.md,.csv,.json,.py,.js,.ts,.html,.css,.xml,.yaml,.yml,.log,.pdf,.docx"
+             onchange="handleFileSelect(event)">
+      <textarea id="user-input" rows="2" placeholder="Type a message… (Enter to send, Shift+Enter for newline)"></textarea>
+      <button id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const history = [];
+  const attachedFiles = [];
+
+  function renderAttachments() {
+    const container = document.getElementById("attachments");
+    container.innerHTML = "";
+    attachedFiles.forEach((f, i) => {
+      const chip = document.createElement("div");
+      chip.className = "attach-chip";
+      chip.innerHTML = `<span>${f.name}</span><button onclick="removeAttachment(${i})">✕</button>`;
+      container.appendChild(chip);
+    });
+  }
+
+  function removeAttachment(index) {
+    attachedFiles.splice(index, 1);
+    renderAttachments();
+  }
+
+  function handleFileSelect(event) {
+    const files = Array.from(event.target.files);
+    event.target.value = "";
+    files.forEach(file => {
+      const lower = file.name.toLowerCase();
+      if (lower.endsWith(".pdf") || lower.endsWith(".docx")) {
+        const form = new FormData();
+        form.append("file", file);
+        fetch("/api/upload", { method: "POST", body: form })
+          .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e.detail)))
+          .then(data => { attachedFiles.push({ name: data.name, content: data.content }); renderAttachments(); })
+          .catch(err => alert(`Upload failed: ${err}`));
+      } else {
+        const reader = new FileReader();
+        reader.onload = e => {
+          attachedFiles.push({ name: file.name, content: e.target.result });
+          renderAttachments();
+        };
+        reader.readAsText(file);
+      }
+    });
+  }
+
+  function renderContent(text) {
+    const container = document.createDocumentFragment();
+    const parts = text.split(/(```[^\n]*\n[\s\S]*?```)/g);
+    parts.forEach(part => {
+      const codeMatch = part.match(/^```([^\n]*)\n([\s\S]*?)```$/);
+      if (codeMatch) {
+        const lang = codeMatch[1].trim();
+        const code = codeMatch[2];
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-block";
+        if (lang) {
+          const label = document.createElement("div");
+          label.className = "code-lang";
+          label.textContent = lang;
+          wrapper.appendChild(label);
+        }
+        const pre = document.createElement("pre");
+        const codeEl = document.createElement("code");
+        codeEl.textContent = code;
+        pre.appendChild(codeEl);
+        wrapper.appendChild(pre);
+        container.appendChild(wrapper);
+      } else if (part) {
+        const imgParts = part.split(/(!\[[^\]]*\]\([^)]+\))/g);
+        imgParts.forEach(seg => {
+          const imgMatch = seg.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+          if (imgMatch) {
+            const img = document.createElement("img");
+            img.alt = imgMatch[1];
+            img.src = imgMatch[2];
+            img.style.cssText = "max-height:220px;max-width:100%;border-radius:6px;border:1px solid #ddd;display:block;margin:6px 0;";
+            img.onerror = () => img.style.display = "none";
+            container.appendChild(img);
+          } else if (seg) {
+            const span = document.createElement("span");
+            span.className = "message-text";
+            renderBold(seg).forEach(node => span.appendChild(node));
+            container.appendChild(span);
+          }
+        });
+      }
+    });
+    return container;
+  }
+
+  function renderBold(text) {
+    const nodes = [];
+    const segments = text.split(/(\*\*[^*]+\*\*)/g);
+    segments.forEach(seg => {
+      const boldMatch = seg.match(/^\*\*([^*]+)\*\*$/);
+      if (boldMatch) {
+        const strong = document.createElement("strong");
+        strong.textContent = boldMatch[1];
+        nodes.push(strong);
+      } else if (seg) {
+        nodes.push(document.createTextNode(seg));
+      }
+    });
+    return nodes;
+  }
+
+  function sourcePdfName(filename) {
+    return filename.replace(/\.[^./]+$/, "") + ".pdf";
+  }
+
+  function sourcePdfUrl(filename) {
+    return `http://${window.location.hostname}/${encodeURIComponent(sourcePdfName(filename))}`;
+  }
+
+  function appendMessage(role, content, sources) {
+    const div = document.createElement("div");
+    div.className = `message ${role}`;
+    if (role === "assistant") {
+      div.appendChild(renderContent(content));
+      if (sources && sources.length > 0) {
+        const src = document.createElement("div");
+        src.className = "sources";
+        src.appendChild(document.createTextNode("Sources:"));
+        sources.forEach(s => {
+          const a = document.createElement("a");
+          a.href = sourcePdfUrl(s);
+          a.textContent = sourcePdfName(s);
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          src.appendChild(a);
+        });
+        div.appendChild(src);
+      }
+    } else {
+      div.textContent = content;
+    }
+    document.getElementById("messages").appendChild(div);
+    div.scrollIntoView({ behavior: "smooth" });
+    return div;
+  }
+
+  function saveChat() {
+    if (history.length === 0) { alert("Nothing to save."); return; }
+    const lines = history.map(m => {
+      const label = m.role === "user" ? "You" : "Assistant";
+      return `[${label}]\n${m.content}`;
+    });
+    const text = lines.join("\n\n---\n\n");
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `chat-${timestamp}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function clearChat() {
+    history.length = 0;
+    document.getElementById("messages").innerHTML = "";
+  }
+
+  async function loadModel() {
+    try {
+      const res = await fetch("/api/model");
+      const data = await res.json();
+      if (data.model) {
+        document.getElementById("model-name").textContent = `· ${data.model}`;
+      }
+    } catch {
+      /* leave blank on failure */
+    }
+  }
+
+  async function listDocuments() {
+    try {
+      const res = await fetch("/api/documents");
+      const data = await res.json();
+      const files = data.files || [];
+      const content = files.length
+        ? "The following documents are indexed:\n\n" + files.map(f => `- ${f}`).join("\n")
+        : "No documents are currently indexed.";
+      appendMessage("assistant", content, files);
+    } catch (e) {
+      appendMessage("error", `Network error: ${e.message}`);
+    }
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById("user-input");
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = "";
+    input.style.height = "auto";
+
+    appendMessage("user", text);
+    history.push({ role: "user", content: text });
+
+    const btn = document.getElementById("send-btn");
+    btn.disabled = true;
+
+    const thinking = document.createElement("div");
+    thinking.className = "thinking";
+    thinking.textContent = "Thinking…";
+    document.getElementById("messages").appendChild(thinking);
+    thinking.scrollIntoView({ behavior: "smooth" });
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history, attached_files: attachedFiles }),
+      });
+
+      thinking.remove();
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        appendMessage("error", `Error: ${err.detail || res.statusText}`);
+        history.pop();
+        return;
+      }
+
+      const data = await res.json();
+      history.push({ role: "assistant", content: data.content });
+      appendMessage("assistant", data.content, data.sources);
+    } catch (e) {
+      thinking.remove();
+      appendMessage("error", `Network error: ${e.message}`);
+      history.pop();
+    } finally {
+      btn.disabled = false;
+      input.focus();
+    }
+  }
+
+  document.getElementById("user-input").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  loadModel();
+
+</script>
+</body>
+</html>

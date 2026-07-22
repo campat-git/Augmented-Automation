@@ -1,0 +1,19 @@
+services:
+  aa02:
+    build: .
+    ports:
+      - "8081:8080"
+    environment:
+      - OLLAMA_URL=http://10.0.0.77:11434
+      - EMBED_MODEL=nomic-embed-text
+      - OLLAMA_TIMEOUT=300
+    volumes:
+      - ./docs:/app/docs            # drop .md files here
+      - ./index:/app/index          # persisted embeddings index
+      - ./logs:/app/logs            # chat history logs (one .txt file per day)
+      - ./context.md:/app/context.md  # system-prompt context, loaded at startup
+      - ./model_used:/app/model_used  # fixed model name, e.g. llama3.2:3b
+      - ./users.json:/app/users.json  # user credentials (manage with manage_users.py)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
