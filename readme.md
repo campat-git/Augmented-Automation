@@ -382,7 +382,7 @@ PDF SOURCE SERVER (httpd)
        http://<hostname>/<source-file-basename>.pdf
 
   where <source-file-basename> matches the indexed document's filename
-  with the extension swapped to .pdf (e.g. JLVC.md -> JLVC.pdf), and
+  with the extension swapped to .pdf (e.g. First-Aid-Guidelines.md -> First-Aid-Guidelines.md), and
   <hostname> is whatever hostname/IP is used to reach the chat UI.
 
   BUILD & TRANSFER (offline transfer, same pattern as aa02)
@@ -392,7 +392,7 @@ PDF SOURCE SERVER (httpd)
        docker save httpd:latest | gzip > httpd.tar.gz
 
   2. Copy httpd.tar.gz to the offline host, along with the PDF files
-     (the ones matching your indexed documents, e.g. JLVC.pdf)
+     (the ones matching your indexed documents, e.g. First-Aid-Guidelines.pdf)
 
   3. On the offline host, load the image:
 
