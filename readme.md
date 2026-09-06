@@ -1,7 +1,7 @@
 # Augmented Automation Basic AA01
 
 <p align="center">
-  <img src="./robot.jpg">
+  <img src="./robot.jpg" width="400">
 </p>
 
 ## 
