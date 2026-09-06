@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Augmented Automation Documents</title>
+  <title>Augmented Automation</title>
   <link rel="icon" type="image/x-icon" href="/static/robot.ico">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,6 +37,16 @@
       color: #000000;
     }
     .header-titles p { font-size: 0.7rem; color: #555; margin-top: 2px; }
+
+    select {
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
 
     .hdr-btn {
       background: #f0f0f0;
@@ -80,7 +90,19 @@
       background: #ffffff;
       color: #000000;
       border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
     }
+
+    .message.assistant .avatar {
+      height: 28px;
+      width: 28px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .message.assistant .assistant-content { flex: 1; min-width: 0; }
 
     .message.error {
       background: #fdeaea;
@@ -91,23 +113,6 @@
     }
 
     .message-text { white-space: pre-wrap; }
-
-    .sources {
-      margin-top: 8px;
-      font-size: 0.72rem;
-      color: #888;
-      border-top: 1px solid #d0d0d0;
-      padding-top: 6px;
-    }
-
-    .sources a {
-      display: block;
-      color: #0f3460;
-      margin-top: 4px;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    .sources a:hover { color: #4a9eff; }
 
     .code-block {
       background: #1a1a1a;
@@ -137,53 +142,6 @@
       font-style: italic;
       padding: 4px 4px;
     }
-
-    #attachments {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding: 8px 16px 0;
-      background: #ffffff;
-    }
-
-    #attachments:empty { display: none; }
-
-    .attach-chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #f0f0f0;
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      padding: 3px 10px;
-      font-size: 0.8rem;
-      color: #000000;
-    }
-
-    .attach-chip button {
-      background: none;
-      border: none;
-      color: #888;
-      cursor: pointer;
-      font-size: 0.9rem;
-      padding: 0;
-      line-height: 1;
-    }
-    .attach-chip button:hover { color: #cc0000; }
-
-    #attach-btn {
-      background: #f0f0f0;
-      color: #000000;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 0 14px;
-      font-size: 1.4rem;
-      cursor: pointer;
-      align-self: flex-end;
-      height: 42px;
-      line-height: 1;
-    }
-    #attach-btn:hover { background: #e0e0e0; }
 
     #input-row {
       display: flex;
@@ -264,10 +222,10 @@
 
 <div id="about-overlay" onclick="if(event.target===this)this.classList.remove('open')">
   <div id="about-box">
-    <h2>About : Augmented Automation Documents </h2>
-    <p><strong>Version:</strong> 0.7</p>
+    <h2>About : AA1 Augmented Automation</h2>
+    <p><strong>Version:</strong> 1.0 </p>
     <p><strong>Built by:</strong> Campbell Pateson</p>
-    <p><strong>Contact :</strong> campbell1@fastmail.com.au</p>
+    <p><strong>Contact:</strong> campbell1@fastmail.com.au </p>
     <button onclick="document.getElementById('about-overlay').classList.remove('open')">Close</button>
   </div>
 </div>
@@ -275,24 +233,19 @@
 <header>
   <img src="/static/J7.png" alt="Logo">
   <div class="header-titles">
-    <h1>Augmented Automation Documents</h1>
-    <p>Local Document Reader <span id="model-name"></span></p>
+    <h1>AA1 Augmented Automation</h1>
+    <p>This is a basic interface into your local LLM</p>
   </div>
+  <select id="model-select"><option value="">Loading models…</option></select>
   <button class="hdr-btn" onclick="saveChat()">Save</button>
   <button class="hdr-btn" onclick="clearChat()">Clear</button>
-  <button class="hdr-btn" onclick="listDocuments()">Documents</button>
   <button class="hdr-btn" onclick="document.getElementById('about-overlay').classList.add('open')">About</button>
 </header>
 
 <div id="main">
   <div id="chat-area">
     <div id="messages"></div>
-    <div id="attachments"></div>
     <div id="input-row">
-      <button id="attach-btn" title="Attach file" onclick="document.getElementById('file-input').click()">+</button>
-      <input type="file" id="file-input" style="display:none" multiple
-             accept=".txt,.md,.csv,.json,.py,.js,.ts,.html,.css,.xml,.yaml,.yml,.log,.pdf,.docx"
-             onchange="handleFileSelect(event)">
       <textarea id="user-input" rows="2" placeholder="Type a message… (Enter to send, Shift+Enter for newline)"></textarea>
       <button id="send-btn" onclick="sendMessage()">Send</button>
     </div>
@@ -301,50 +254,26 @@
 
 <script>
   const history = [];
-  const attachedFiles = [];
 
-  function renderAttachments() {
-    const container = document.getElementById("attachments");
-    container.innerHTML = "";
-    attachedFiles.forEach((f, i) => {
-      const chip = document.createElement("div");
-      chip.className = "attach-chip";
-      chip.innerHTML = `<span>${f.name}</span><button onclick="removeAttachment(${i})">✕</button>`;
-      container.appendChild(chip);
-    });
-  }
-
-  function removeAttachment(index) {
-    attachedFiles.splice(index, 1);
-    renderAttachments();
-  }
-
-  function handleFileSelect(event) {
-    const files = Array.from(event.target.files);
-    event.target.value = "";
-    files.forEach(file => {
-      const lower = file.name.toLowerCase();
-      if (lower.endsWith(".pdf") || lower.endsWith(".docx")) {
-        const form = new FormData();
-        form.append("file", file);
-        fetch("/api/upload", { method: "POST", body: form })
-          .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e.detail)))
-          .then(data => { attachedFiles.push({ name: data.name, content: data.content }); renderAttachments(); })
-          .catch(err => alert(`Upload failed: ${err}`));
-      } else {
-        const reader = new FileReader();
-        reader.onload = e => {
-          attachedFiles.push({ name: file.name, content: e.target.result });
-          renderAttachments();
-        };
-        reader.readAsText(file);
+  async function loadModels() {
+    const sel = document.getElementById("model-select");
+    try {
+      const res = await fetch("/api/models");
+      const data = await res.json();
+      if (!data.models || data.models.length === 0) {
+        sel.innerHTML = '<option value="">No models found</option>';
+        return;
       }
-    });
+      sel.innerHTML = data.models.map(m => `<option value="${m}">${m}</option>`).join("");
+    } catch {
+      sel.innerHTML = '<option value="">Error loading models</option>';
+    }
   }
 
   function renderContent(text) {
     const container = document.createDocumentFragment();
     const parts = text.split(/(```[^\n]*\n[\s\S]*?```)/g);
+
     parts.forEach(part => {
       const codeMatch = part.match(/^```([^\n]*)\n([\s\S]*?)```$/);
       if (codeMatch) {
@@ -365,71 +294,30 @@
         wrapper.appendChild(pre);
         container.appendChild(wrapper);
       } else if (part) {
-        const imgParts = part.split(/(!\[[^\]]*\]\([^)]+\))/g);
-        imgParts.forEach(seg => {
-          const imgMatch = seg.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
-          if (imgMatch) {
-            const img = document.createElement("img");
-            img.alt = imgMatch[1];
-            img.src = imgMatch[2];
-            img.style.cssText = "max-height:220px;max-width:100%;border-radius:6px;border:1px solid #ddd;display:block;margin:6px 0;";
-            img.onerror = () => img.style.display = "none";
-            container.appendChild(img);
-          } else if (seg) {
-            const span = document.createElement("span");
-            span.className = "message-text";
-            renderBold(seg).forEach(node => span.appendChild(node));
-            container.appendChild(span);
-          }
-        });
+        const span = document.createElement("span");
+        span.className = "message-text";
+        span.textContent = part;
+        container.appendChild(span);
       }
     });
+
     return container;
   }
 
-  function renderBold(text) {
-    const nodes = [];
-    const segments = text.split(/(\*\*[^*]+\*\*)/g);
-    segments.forEach(seg => {
-      const boldMatch = seg.match(/^\*\*([^*]+)\*\*$/);
-      if (boldMatch) {
-        const strong = document.createElement("strong");
-        strong.textContent = boldMatch[1];
-        nodes.push(strong);
-      } else if (seg) {
-        nodes.push(document.createTextNode(seg));
-      }
-    });
-    return nodes;
-  }
-
-  function sourcePdfName(filename) {
-    return filename.replace(/\.[^./]+$/, "") + ".pdf";
-  }
-
-  function sourcePdfUrl(filename) {
-    return `http://${window.location.hostname}/${encodeURIComponent(sourcePdfName(filename))}`;
-  }
-
-  function appendMessage(role, content, sources) {
+  function appendMessage(role, content) {
     const div = document.createElement("div");
     div.className = `message ${role}`;
     if (role === "assistant") {
-      div.appendChild(renderContent(content));
-      if (sources && sources.length > 0) {
-        const src = document.createElement("div");
-        src.className = "sources";
-        src.appendChild(document.createTextNode("Sources:"));
-        sources.forEach(s => {
-          const a = document.createElement("a");
-          a.href = sourcePdfUrl(s);
-          a.textContent = sourcePdfName(s);
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          src.appendChild(a);
-        });
-        div.appendChild(src);
-      }
+      const avatar = document.createElement("img");
+      avatar.className = "avatar";
+      avatar.src = "/static/J7.png";
+      avatar.alt = "Assistant";
+      div.appendChild(avatar);
+
+      const contentDiv = document.createElement("div");
+      contentDiv.className = "assistant-content";
+      contentDiv.appendChild(renderContent(content));
+      div.appendChild(contentDiv);
     } else {
       div.textContent = content;
     }
@@ -446,11 +334,12 @@
     });
     const text = lines.join("\n\n---\n\n");
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const filename = `chat-${timestamp}.txt`;
     const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `chat-${timestamp}.txt`;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -460,36 +349,13 @@
     document.getElementById("messages").innerHTML = "";
   }
 
-  async function loadModel() {
-    try {
-      const res = await fetch("/api/model");
-      const data = await res.json();
-      if (data.model) {
-        document.getElementById("model-name").textContent = `· ${data.model}`;
-      }
-    } catch {
-      /* leave blank on failure */
-    }
-  }
-
-  async function listDocuments() {
-    try {
-      const res = await fetch("/api/documents");
-      const data = await res.json();
-      const files = data.files || [];
-      const content = files.length
-        ? "The following documents are indexed:\n\n" + files.map(f => `- ${f}`).join("\n")
-        : "No documents are currently indexed.";
-      appendMessage("assistant", content, files);
-    } catch (e) {
-      appendMessage("error", `Network error: ${e.message}`);
-    }
-  }
-
   async function sendMessage() {
     const input = document.getElementById("user-input");
     const text = input.value.trim();
     if (!text) return;
+
+    const model = document.getElementById("model-select").value;
+    if (!model) { alert("No model selected."); return; }
 
     input.value = "";
     input.style.height = "auto";
@@ -510,7 +376,7 @@
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history, attached_files: attachedFiles }),
+        body: JSON.stringify({ model, messages: history, system: "" }),
       });
 
       thinking.remove();
@@ -523,8 +389,9 @@
       }
 
       const data = await res.json();
-      history.push({ role: "assistant", content: data.content });
-      appendMessage("assistant", data.content, data.sources);
+      const reply = data.content;
+      history.push({ role: "assistant", content: reply });
+      appendMessage("assistant", reply);
     } catch (e) {
       thinking.remove();
       appendMessage("error", `Network error: ${e.message}`);
@@ -542,8 +409,7 @@
     }
   });
 
-  loadModel();
-
+  loadModels();
 </script>
 </body>
 </html>
